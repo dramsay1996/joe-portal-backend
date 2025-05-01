@@ -30,7 +30,11 @@ func SetupRoutes() *mux.Router {
 	apiRouter := router.PathPrefix("/api").Subrouter()
 
 	// Public routes (no auth required)
-	apiRouter.HandleFunc("/login", handlers.Login).Methods("POST", "OPTIONS")
+	apiRouter.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Login handler called for path: %s, method: %s", r.URL.Path, r.Method)
+		handlers.Login(w, r)
+	}).Methods("POST", "OPTIONS")
+
 	apiRouter.HandleFunc("/strava/auth", handlers.StravaAuth).Methods("GET", "OPTIONS")
 	apiRouter.HandleFunc("/strava/callback", handlers.StravaCallback).Methods("GET", "OPTIONS")
 

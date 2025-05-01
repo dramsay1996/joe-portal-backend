@@ -13,13 +13,16 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		// Get allowed origins from environment variable
 		allowedOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
 		if allowedOrigins == "" {
-			allowedOrigins = "http://localhost:3000" // Default to Next.js development server
+			allowedOrigins = "http://localhost:3000,https://www.joececil.org" // Default to development and production
 		}
 
 		// Get the origin from the request
 		origin := r.Header.Get("Origin")
 		log.Printf("CORS: Received request from origin: %s", origin)
 		log.Printf("CORS: Allowed origins: %s", allowedOrigins)
+		log.Printf("CORS: Request method: %s", r.Method)
+		log.Printf("CORS: Request path: %s", r.URL.Path)
+		log.Printf("CORS: Request headers: %v", r.Header)
 
 		// Check if the origin is in the allowed list
 		allowed := false
@@ -49,6 +52,8 @@ func CORSMiddleware(next http.Handler) http.Handler {
 			}
 		} else {
 			log.Printf("CORS: Rejecting origin: %s (not in allowed list: %s)", origin, allowedOrigins)
+			// For debugging, let's see what headers we're actually sending
+			log.Printf("CORS: Current response headers: %v", w.Header())
 		}
 
 		next.ServeHTTP(w, r)
