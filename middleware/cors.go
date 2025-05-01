@@ -19,11 +19,14 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		// Get the origin from the request
 		origin := r.Header.Get("Origin")
 		log.Printf("CORS: Received request from origin: %s", origin)
+		log.Printf("CORS: Allowed origins: %s", allowedOrigins)
 
 		// Check if the origin is in the allowed list
 		allowed := false
 		for _, allowedOrigin := range strings.Split(allowedOrigins, ",") {
-			if strings.TrimSpace(allowedOrigin) == origin {
+			allowedOrigin = strings.TrimSpace(allowedOrigin)
+			log.Printf("CORS: Comparing '%s' with '%s'", origin, allowedOrigin)
+			if allowedOrigin == origin {
 				allowed = true
 				break
 			}
@@ -36,15 +39,16 @@ func CORSMiddleware(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
+
+			// Handle preflight requests
+			if r.Method == "OPTIONS" {
+				log.Printf("CORS: Handling preflight request for %s", r.URL.Path)
+				log.Printf("CORS: Preflight headers: %v", r.Header)
+				w.WriteHeader(http.StatusOK)
+				return
+			}
 		} else {
 			log.Printf("CORS: Rejecting origin: %s (not in allowed list: %s)", origin, allowedOrigins)
-		}
-
-		// Handle preflight requests
-		if r.Method == "OPTIONS" {
-			log.Printf("CORS: Handling preflight request for %s", r.URL.Path)
-			w.WriteHeader(http.StatusOK)
-			return
 		}
 
 		next.ServeHTTP(w, r)
