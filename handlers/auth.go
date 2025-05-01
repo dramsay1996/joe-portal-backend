@@ -21,6 +21,12 @@ type Claims struct {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
+	// Handle OPTIONS request
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	var req LoginRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
