@@ -25,16 +25,16 @@ func SetupRoutes() *mux.Router {
 		w.Write([]byte(`{"status": "ok", "message": "API is running"}`))
 	})
 
-	// Public routes (no auth required)
-	public := router.PathPrefix("/api").Subrouter()
-	public.HandleFunc("/login", handlers.Login).Methods("POST", "OPTIONS")
+	// Create API router with /api prefix
+	apiRouter := router.PathPrefix("/api").Subrouter()
 
-	// Strava OAuth routes
-	public.HandleFunc("/strava/auth", handlers.StravaAuth).Methods("GET", "OPTIONS")
-	public.HandleFunc("/strava/callback", handlers.StravaCallback).Methods("GET", "OPTIONS")
+	// Public routes (no auth required)
+	apiRouter.HandleFunc("/login", handlers.Login).Methods("POST", "OPTIONS")
+	apiRouter.HandleFunc("/strava/auth", handlers.StravaAuth).Methods("GET", "OPTIONS")
+	apiRouter.HandleFunc("/strava/callback", handlers.StravaCallback).Methods("GET", "OPTIONS")
 
 	// Protected routes (auth required)
-	protected := router.PathPrefix("/api").Subrouter()
+	protected := apiRouter.PathPrefix("").Subrouter() // Empty prefix since we're already under /api
 	protected.Use(middleware.AuthMiddleware)
 
 	// Strava routes
