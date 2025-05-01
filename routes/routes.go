@@ -3,6 +3,7 @@ package routes
 import (
 	"joe-portal/backend/handlers"
 	"joe-portal/backend/middleware"
+	"net/http"
 
 	"github.com/gorilla/mux"
 )
@@ -16,6 +17,13 @@ func SetupRoutes() *mux.Router {
 
 	// Apply CORS middleware to all routes
 	router.Use(middleware.CORSMiddleware)
+
+	// Add root route for debugging
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status": "ok", "message": "API is running"}`))
+	})
 
 	// Public routes (no auth required)
 	public := router.PathPrefix("/api").Subrouter()
