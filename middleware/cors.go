@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -17,6 +18,7 @@ func CORSMiddleware(next http.Handler) http.Handler {
 
 		// Get the origin from the request
 		origin := r.Header.Get("Origin")
+		log.Printf("CORS: Received request from origin: %s", origin)
 
 		// Check if the origin is in the allowed list
 		allowed := false
@@ -28,15 +30,19 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		}
 
 		if allowed {
+			log.Printf("CORS: Allowing origin: %s", origin)
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
+		} else {
+			log.Printf("CORS: Rejecting origin: %s (not in allowed list: %s)", origin, allowedOrigins)
 		}
 
 		// Handle preflight requests
 		if r.Method == "OPTIONS" {
+			log.Printf("CORS: Handling preflight request for %s", r.URL.Path)
 			w.WriteHeader(http.StatusOK)
 			return
 		}
