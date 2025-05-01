@@ -3,6 +3,7 @@ package routes
 import (
 	"joe-portal/backend/handlers"
 	"joe-portal/backend/middleware"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -45,6 +46,20 @@ func SetupRoutes() *mux.Router {
 	// AI routes
 	protected.HandleFunc("/ai/brule-quote", handlers.GenerateBruleQuote).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/ai/check-content", handlers.CheckContentForVulgarity).Methods("POST", "OPTIONS")
+
+	// Debug: Print all registered routes
+	router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		t, err := route.GetPathTemplate()
+		if err != nil {
+			return err
+		}
+		methods, err := route.GetMethods()
+		if err != nil {
+			return err
+		}
+		log.Printf("Route: %s, Methods: %v", t, methods)
+		return nil
+	})
 
 	return router
 }
