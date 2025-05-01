@@ -11,6 +11,9 @@ import (
 func SetupRoutes() *mux.Router {
 	router := mux.NewRouter()
 
+	// Apply logging middleware first
+	router.Use(middleware.LoggingMiddleware)
+
 	// Apply CORS middleware to all routes
 	router.Use(middleware.CORSMiddleware)
 
