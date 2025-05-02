@@ -24,14 +24,50 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		log.Printf("CORS: Request path: %s", r.URL.Path)
 		log.Printf("CORS: Request headers: %v", r.Header)
 
-		// Check if the origin is in the allowed list
+		// Always set CORS headers for preflight requests
+		if r.Method == "OPTIONS" {
+			log.Printf("CORS: Handling preflight request for %s", r.URL.Path)
+			log.Printf("CORS: Preflight headers: %v", r.Header)
+
+			// For preflight requests, we'll allow the origin if it's in our list
+			allowed := false
+			if origin != "" {
+				for _, allowedOrigin := range strings.Split(allowedOrigins, ",") {
+					allowedOrigin = strings.TrimSpace(allowedOrigin)
+					if allowedOrigin == origin {
+						allowed = true
+						break
+					}
+				}
+			}
+
+			if allowed {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+			} else {
+				// For preflight, we'll allow the requesting origin if it's not empty
+				if origin != "" {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+				}
+			}
+
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// For non-preflight requests, check if the origin is in the allowed list
 		allowed := false
-		for _, allowedOrigin := range strings.Split(allowedOrigins, ",") {
-			allowedOrigin = strings.TrimSpace(allowedOrigin)
-			log.Printf("CORS: Comparing '%s' with '%s'", origin, allowedOrigin)
-			if allowedOrigin == origin {
-				allowed = true
-				break
+		if origin != "" {
+			for _, allowedOrigin := range strings.Split(allowedOrigins, ",") {
+				allowedOrigin = strings.TrimSpace(allowedOrigin)
+				log.Printf("CORS: Comparing '%s' with '%s'", origin, allowedOrigin)
+				if allowedOrigin == origin {
+					allowed = true
+					break
+				}
 			}
 		}
 
@@ -42,14 +78,6 @@ func CORSMiddleware(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
-
-			// Handle preflight requests
-			if r.Method == "OPTIONS" {
-				log.Printf("CORS: Handling preflight request for %s", r.URL.Path)
-				log.Printf("CORS: Preflight headers: %v", r.Header)
-				w.WriteHeader(http.StatusOK)
-				return
-			}
 		} else {
 			log.Printf("CORS: Rejecting origin: %s (not in allowed list: %s)", origin, allowedOrigins)
 			// For debugging, let's see what headers we're actually sending
